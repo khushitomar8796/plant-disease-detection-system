@@ -1,30 +1,39 @@
 print("APP STARTING...")
 
 import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"   # hides tensorflow noise
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import cv2
 import numpy as np
 import json
 from datetime import datetime
 from flask import Flask, render_template, request
+import gdown
 
 print("IMPORTS DONE")
+
+# -------------------------------
+# DOWNLOAD MODEL (IMPORTANT)
+# -------------------------------
+MODEL_PATH = "plant_model.keras"
+MODEL_URL = "https://drive.google.com/file/d/1_2zo9RgbkuyZu0XH4zBULUBBGh_BBWWs/view?usp=share_link"
+
+if not os.path.exists(MODEL_PATH):
+    print("Downloading model...")
+    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+    print("Model downloaded!")
 
 from tensorflow.keras.models import load_model
 
 print("LOADING MODEL...")
-
-model = load_model("plant_model.keras", compile=False)
-
+model = load_model(MODEL_PATH, compile=False)
 print("MODEL LOADED SUCCESSFULLY")
 
 app = Flask(__name__)
 
-# Load trained model
-model = load_model("plant_model.keras")
-
-# Class labels
+# -------------------------------
+# CLASS LABELS
+# -------------------------------
 class_names = [
 'Pepper__bell___Bacterial_spot',
 'Pepper__bell___healthy',
@@ -43,7 +52,9 @@ class_names = [
 'Tomato_healthy'
 ]
 
-# General solutions
+# -------------------------------
+# SOLUTIONS + PESTICIDES
+# -------------------------------
 solutions = {
     "Pepper__bell___Bacterial_spot": "Avoid overhead watering and remove infected leaves.",
     "Pepper__bell___healthy": "Your plant is healthy. Maintain proper care.",
@@ -62,33 +73,34 @@ solutions = {
     "Tomato_healthy": "Your plant is healthy."
 }
 
-# 🌿 NEW: Pesticide Recommendations
 pesticides = {
-    "Pepper__bell___Bacterial_spot": "Copper-based fungicide (Spray every 7 days)",
+    "Pepper__bell___Bacterial_spot": "Copper-based fungicide",
     "Pepper__bell___healthy": "No pesticide required",
-
-    "Potato___Early_blight": "Mancozeb fungicide (Spray every 7–10 days)",
-    "Potato___Late_blight": "Metalaxyl fungicide (Apply early stage)",
+    "Potato___Early_blight": "Mancozeb",
+    "Potato___Late_blight": "Metalaxyl",
     "Potato___healthy": "No pesticide required",
-
-    "Tomato_Bacterial_spot": "Copper fungicide spray",
-    "Tomato_Early_blight": "Mancozeb or Chlorothalonil",
-    "Tomato_Late_blight": "Chlorothalonil or Metalaxyl",
-    "Tomato_Leaf_Mold": "Chlorothalonil spray",
-    "Tomato_Septoria_leaf_spot": "Mancozeb fungicide",
-    "Tomato_Spider_mites_Two_spotted_spider_mite": "Neem oil spray",
-    "Tomato__Target_Spot": "Azoxystrobin fungicide",
-    "Tomato__Tomato_YellowLeaf__Curl_Virus": "Imidacloprid (for whiteflies)",
-    "Tomato__Tomato_mosaic_virus": "No chemical cure, remove plant",
+    "Tomato_Bacterial_spot": "Copper fungicide",
+    "Tomato_Early_blight": "Mancozeb",
+    "Tomato_Late_blight": "Chlorothalonil",
+    "Tomato_Leaf_Mold": "Chlorothalonil",
+    "Tomato_Septoria_leaf_spot": "Mancozeb",
+    "Tomato_Spider_mites_Two_spotted_spider_mite": "Neem oil",
+    "Tomato__Target_Spot": "Azoxystrobin",
+    "Tomato__Tomato_YellowLeaf__Curl_Virus": "Imidacloprid",
+    "Tomato__Tomato_mosaic_virus": "Remove plant",
     "Tomato_healthy": "No pesticide required"
 }
 
-# Ensure history file exists
+# -------------------------------
+# HISTORY FILE
+# -------------------------------
 if not os.path.exists("history.json"):
     with open("history.json", "w") as f:
         json.dump([], f)
 
-
+# -------------------------------
+# ROUTES
+# -------------------------------
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -96,7 +108,13 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    if 'image' not in request.files:
+        return "No file uploaded"
+
     file = request.files['image']
+
+    if file.filename == "":
+        return "No file selected"
 
     filepath = os.path.join("static", file.filename)
     file.save(filepath)
@@ -115,14 +133,13 @@ def predict():
     predicted_label = class_names[class_index]
     confidence = float(round(np.max(prediction) * 100, 2))
 
-    solution = solutions.get(predicted_label, "No recommendation available.")
-    pesticide = pesticides.get(predicted_label, "No pesticide info available.")
+    solution = solutions.get(predicted_label)
+    pesticide = pesticides.get(predicted_label)
 
-    # Load history
+    # Save history
     with open("history.json", "r") as f:
         history = json.load(f)
 
-    # Add new entry
     history.append({
         "label": predicted_label,
         "confidence": confidence,
@@ -130,7 +147,6 @@ def predict():
         "time": datetime.now().strftime("%Y-%m-%d %H:%M")
     })
 
-    # Save history
     with open("history.json", "w") as f:
         json.dump(history, f)
 
@@ -153,30 +169,26 @@ def dashboard():
         history = []
 
     total = len(history)
-
-    healthy = sum(1 for h in history if "healthy" in str(h.get("label", "")).lower())
+    healthy = sum(1 for h in history if "healthy" in h["label"].lower())
     diseased = total - healthy
 
     freq = {}
     for h in history:
-        label = str(h.get("label", "Unknown"))
-        freq[label] = freq.get(label, 0) + 1
+        freq[h["label"]] = freq.get(h["label"], 0) + 1
 
     most_common = max(freq, key=freq.get) if freq else "N/A"
 
-    # CLEAN DATA (IMPORTANT FIX)
-    labels = [str(k) for k in freq.keys()]
-    values = [int(v) for v in freq.values()]
-
     return render_template(
         "dashboard.html",
-        total=int(total),
-        healthy=int(healthy),
-        diseased=int(diseased),
-        most_common=str(most_common),
+        total=total,
+        healthy=healthy,
+        diseased=diseased,
+        most_common=most_common,
         history=history[::-1],
-        chart_labels=labels,
-        chart_values=values
+        chart_labels=list(freq.keys()),
+        chart_values=list(freq.values())
     )
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True)
