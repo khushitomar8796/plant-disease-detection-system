@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plant Disease Detection</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* HERO */
+.hero {
+    height: 100vh;
+    background: url('/static/IMG_6119.JPG') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* OVERLAY */
+.overlay {
+    background: rgba(0,0,0,0.5);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* MAIN BOX */
+.main-box {
+    background: rgba(255,255,255,0.95);
+    padding: 35px;
+    border-radius: 16px;
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+}
+
+/* TITLE */
+h1 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+/* SUBTEXT */
+p {
+    font-size: 14px;
+    color: #555;
+}
+
+/* FILE INPUT */
+input[type="file"] {
+    margin-top: 15px;
+}
+
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2e7d32;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    margin-top: 15px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #1b5e20;
+}
+
+/* DASHBOARD BUTTON */
+.dashboard-btn {
+    background: #444;
+}
+
+.dashboard-btn:hover {
+    background: #222;
+}
+
+/* RESULT BOX */
+.result-box {
+    margin-top: 25px;
+    padding: 18px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    text-align: left;
+    border-left: 5px solid #2e7d32;
+}
+
+/* RESULT TITLE */
+.result-box h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+/* TEXT */
+.result-box p {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+/* IMAGE */
+.result-box img {
+    margin-top: 10px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+/* SECONDARY PREDICTIONS */
+.alt-box {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="hero">
+<div class="overlay">
+
+<div class="main-box">
+
+<h1>Plant Disease Detection</h1>
+<p>Upload a leaf image for instant diagnosis</p>
+
+<form action="/predict" method="post" enctype="multipart/form-data">
+    <input type="file" name="image" required>
+    <button type="submit">Analyze Plant</button>
+</form>
+
+<a href="/dashboard">
+    <button class="dashboard-btn">View Dashboard</button>
+</a>
+
+{% if prediction %}
+<div class="result-box">
+
+    <h3>
+        {% if prediction == "Not sure" %}
+            ⚠️ Not sure
+        {% else %}
+            {{ prediction.replace('_',' ') }}
+        {% endif %}
+    </h3>
+
+    {% if prediction != "Not sure" %}
+        <p><strong>Confidence:</strong> {{ confidence }}%</p>
+    {% endif %}
+
+    <p>{{ solution }}</p>
+
+    <img src="{{ image_path }}">
+
+    <p><strong>Pesticide Recommendation:</strong> {{ pesticide }}</p>
+
+    <!-- TOP 2 PREDICTIONS -->
+    {% if top2 %}
+    <div class="alt-box">
+        <strong>Other possibilities:</strong>
+        <ul>
+            {% for item in top2 %}
+                <li>{{ item[0].replace('_',' ') }} ({{ item[1]|round(2) }}%)</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+
+</div>
+
+</div>
+</div>
+
+</body>
+</html>

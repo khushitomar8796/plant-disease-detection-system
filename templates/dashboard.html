@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #f4f6f8;
+}
+
+.header {
+    background: #1b5e20;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.container {
+    padding: 30px;
+}
+
+/* CARDS */
+.cards {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.card {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.card h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.card p {
+    color: gray;
+    margin-top: 5px;
+}
+
+/* INSIGHT TEXT */
+.insight {
+    margin-bottom: 25px;
+    color: #444;
+    font-size: 15px;
+}
+
+/* CHART */
+.chart-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+}
+
+th {
+    background: #2e7d32;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+img {
+    border-radius: 6px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+    <h1>🌿 Plant Health Dashboard</h1>
+</div>
+
+<div class="container">
+
+<div class="cards">
+    <div class="card">
+        <h2>{{ total | default(0) }}</h2>
+        <p>Total Scans</p>
+    </div>
+
+    <div class="card">
+        <h2>{{ healthy | default(0) }}</h2>
+        <p>Healthy Plants</p>
+    </div>
+
+    <div class="card">
+        <h2>{{ diseased | default(0) }}</h2>
+        <p>Diseased Plants</p>
+    </div>
+
+    <div class="card">
+        <h2>{{ most_common | default('N/A') | replace('_',' ') }}</h2>
+        <p>Most Common Disease</p>
+    </div>
+</div>
+
+<!-- WHY DASHBOARD (IMPORTANT FOR VIVA) -->
+<p class="insight">
+This dashboard provides analytical insights into plant health trends, helping users 
+identify frequently occurring diseases, monitor plant conditions over time, and 
+support informed agricultural decision-making.
+</p>
+
+<div class="chart-box">
+    <canvas id="diseaseChart"></canvas>
+</div>
+
+<table>
+<tr>
+    <th>Image</th>
+    <th>Disease</th>
+    <th>Confidence</th>
+    <th>Time</th>
+</tr>
+
+{% for item in history %}
+<tr>
+    <td><img src="{{ item.image }}" width="80"></td>
+    <td>{{ item.label.replace('_',' ') }}</td>
+    <td>{{ item.confidence }}%</td>
+    <td>{{ item.time }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+<script>
+const ctx = document.getElementById('diseaseChart');
+
+// ✅ SAFE DATA (THIS FIXES YOUR ERROR)
+const labels = {{ chart_labels | default([]) | tojson }};
+const values = {{ chart_values | default([]) | tojson }};
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Disease Count',
+            data: values,
+            backgroundColor: '#2e7d32'
+        }]
+    },
+    options: {
+        plugins: {
+            title: {
+                display: true,
+                text: 'Disease Distribution Analysis'
+            }
+        },
+        responsive: true
+    }
+});
+</script>
+
+</body>
+</html>
