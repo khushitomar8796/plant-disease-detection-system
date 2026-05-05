@@ -19,7 +19,7 @@ if not os.path.exists("plant_model.keras"):
 from tensorflow.keras.models import load_model
 
 print("LOADING MODEL...")
-model = load_model(MODEL_PATH, compile=False)
+model = load_model(/Users/khushitomar/Library/Mobile Documents/com~apple~CloudDocs/PlantDisesaseProject/plant_model.keras, compile=False)
 print("MODEL LOADED SUCCESSFULLY")
 
 app = Flask(__name__)
