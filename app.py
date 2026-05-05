@@ -10,16 +10,20 @@ from datetime import datetime
 from flask import Flask, render_template, request
 import gdown
 
-import gdown
-
+# -------------------------------
+# DOWNLOAD MODEL (IMPORTANT)
+# -------------------------------
 if not os.path.exists("plant_model.keras"):
-    url = "https://drive.google.com/file/d/1_2zo9RgbkuyZu0XH4zBULUBBGh_BBWWs/view?usp=share_link"
+    url = "https://drive.google.com/uc?id=1_2zo9RgbkuyZu0XH4zBULUBBGh_BBWWs"
     gdown.download(url, "plant_model.keras", quiet=False)
 
+# -------------------------------
+# LOAD MODEL
+# -------------------------------
 from tensorflow.keras.models import load_model
 
 print("LOADING MODEL...")
-model = load_model(/Users/khushitomar/Library/Mobile Documents/com~apple~CloudDocs/PlantDisesaseProject/plant_model.keras, compile=False)
+model = load_model("plant_model.keras", compile=False)
 print("MODEL LOADED SUCCESSFULLY")
 
 app = Flask(__name__)
@@ -98,7 +102,6 @@ if not os.path.exists("history.json"):
 def home():
     return render_template('index.html')
 
-
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'image' not in request.files:
@@ -112,14 +115,12 @@ def predict():
     filepath = os.path.join("static", file.filename)
     file.save(filepath)
 
-    # Image preprocessing
     img = cv2.imread(filepath)
     img = cv2.resize(img, (128, 128))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = img / 255.0
     img = np.reshape(img, (1, 128, 128, 3))
 
-    # Prediction
     prediction = model.predict(img)
     class_index = np.argmax(prediction)
 
@@ -129,7 +130,6 @@ def predict():
     solution = solutions.get(predicted_label)
     pesticide = pesticides.get(predicted_label)
 
-    # Save history
     with open("history.json", "r") as f:
         history = json.load(f)
 
@@ -151,7 +151,6 @@ def predict():
         pesticide=pesticide,
         img_path=filepath
     )
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -181,7 +180,6 @@ def dashboard():
         chart_labels=list(freq.keys()),
         chart_values=list(freq.values())
     )
-
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=5000)
