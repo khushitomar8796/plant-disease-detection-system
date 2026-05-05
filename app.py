@@ -10,16 +10,14 @@ from datetime import datetime
 from flask import Flask, render_template, request
 import gdown
 
-# -------------------------------
-# DOWNLOAD MODEL (IMPORTANT)
-# -------------------------------
+print("IMPORTS DONE")
+
+# ✅ Download model from Google Drive (FIXED LINK)
 if not os.path.exists("plant_model.keras"):
+    print("DOWNLOADING MODEL...")
     url = "https://drive.google.com/uc?id=1_2zo9RgbkuyZu0XH4zBULUBBGh_BBWWs"
     gdown.download(url, "plant_model.keras", quiet=False)
 
-# -------------------------------
-# LOAD MODEL
-# -------------------------------
 from tensorflow.keras.models import load_model
 
 print("LOADING MODEL...")
@@ -54,29 +52,29 @@ class_names = [
 # -------------------------------
 solutions = {
     "Pepper__bell___Bacterial_spot": "Avoid overhead watering and remove infected leaves.",
-    "Pepper__bell___healthy": "Your plant is healthy. Maintain proper care.",
-    "Potato___Early_blight": "Remove infected leaves and maintain soil health.",
-    "Potato___Late_blight": "Avoid excess moisture and improve air circulation.",
-    "Potato___healthy": "Your plant is healthy.",
-    "Tomato_Bacterial_spot": "Avoid overhead irrigation and use clean tools.",
-    "Tomato_Early_blight": "Remove affected leaves and rotate crops.",
-    "Tomato_Late_blight": "Avoid wet conditions and monitor plant closely.",
-    "Tomato_Leaf_Mold": "Reduce humidity and improve ventilation.",
-    "Tomato_Septoria_leaf_spot": "Prune infected leaves and avoid splashing water.",
-    "Tomato_Spider_mites_Two_spotted_spider_mite": "Wash leaves and maintain humidity.",
-    "Tomato__Target_Spot": "Remove infected parts and maintain hygiene.",
-    "Tomato__Tomato_YellowLeaf__Curl_Virus": "Control insect vectors like whiteflies.",
-    "Tomato__Tomato_mosaic_virus": "Remove infected plants immediately.",
-    "Tomato_healthy": "Your plant is healthy."
+    "Pepper__bell___healthy": "Your plant is healthy.",
+    "Potato___Early_blight": "Remove infected leaves.",
+    "Potato___Late_blight": "Avoid excess moisture.",
+    "Potato___healthy": "Healthy plant.",
+    "Tomato_Bacterial_spot": "Use clean tools.",
+    "Tomato_Early_blight": "Rotate crops.",
+    "Tomato_Late_blight": "Avoid wet conditions.",
+    "Tomato_Leaf_Mold": "Improve ventilation.",
+    "Tomato_Septoria_leaf_spot": "Prune leaves.",
+    "Tomato_Spider_mites_Two_spotted_spider_mite": "Wash leaves.",
+    "Tomato__Target_Spot": "Maintain hygiene.",
+    "Tomato__Tomato_YellowLeaf__Curl_Virus": "Control whiteflies.",
+    "Tomato__Tomato_mosaic_virus": "Remove plant.",
+    "Tomato_healthy": "Healthy plant."
 }
 
 pesticides = {
-    "Pepper__bell___Bacterial_spot": "Copper-based fungicide",
-    "Pepper__bell___healthy": "No pesticide required",
+    "Pepper__bell___Bacterial_spot": "Copper fungicide",
+    "Pepper__bell___healthy": "None",
     "Potato___Early_blight": "Mancozeb",
     "Potato___Late_blight": "Metalaxyl",
-    "Potato___healthy": "No pesticide required",
-    "Tomato_Bacterial_spot": "Copper fungicide",
+    "Potato___healthy": "None",
+    "Tomato_Bacterial_spot": "Copper spray",
     "Tomato_Early_blight": "Mancozeb",
     "Tomato_Late_blight": "Chlorothalonil",
     "Tomato_Leaf_Mold": "Chlorothalonil",
@@ -85,7 +83,7 @@ pesticides = {
     "Tomato__Target_Spot": "Azoxystrobin",
     "Tomato__Tomato_YellowLeaf__Curl_Virus": "Imidacloprid",
     "Tomato__Tomato_mosaic_virus": "Remove plant",
-    "Tomato_healthy": "No pesticide required"
+    "Tomato_healthy": "None"
 }
 
 # -------------------------------
@@ -104,13 +102,7 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return "No file uploaded"
-
     file = request.files['image']
-
-    if file.filename == "":
-        return "No file selected"
 
     filepath = os.path.join("static", file.filename)
     file.save(filepath)
@@ -164,22 +156,13 @@ def dashboard():
     healthy = sum(1 for h in history if "healthy" in h["label"].lower())
     diseased = total - healthy
 
-    freq = {}
-    for h in history:
-        freq[h["label"]] = freq.get(h["label"], 0) + 1
-
-    most_common = max(freq, key=freq.get) if freq else "N/A"
-
     return render_template(
         "dashboard.html",
         total=total,
         healthy=healthy,
         diseased=diseased,
-        most_common=most_common,
-        history=history[::-1],
-        chart_labels=list(freq.keys()),
-        chart_values=list(freq.values())
+        history=history[::-1]
     )
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000)
