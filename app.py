@@ -10,18 +10,11 @@ from datetime import datetime
 from flask import Flask, render_template, request
 import gdown
 
-print("IMPORTS DONE")
+import gdown
 
-# -------------------------------
-# DOWNLOAD MODEL (IMPORTANT)
-# -------------------------------
-MODEL_PATH = "plant_model.keras"
-MODEL_URL = "https://drive.google.com/file/d/1_2zo9RgbkuyZu0XH4zBULUBBGh_BBWWs/view?usp=share_link"
-
-if not os.path.exists(MODEL_PATH):
-    print("Downloading model...")
-    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
-    print("Model downloaded!")
+if not os.path.exists("plant_model.keras"):
+    url = "https://drive.google.com/file/d/1_2zo9RgbkuyZu0XH4zBULUBBGh_BBWWs/view?usp=share_link"
+    gdown.download(url, "plant_model.keras", quiet=False)
 
 from tensorflow.keras.models import load_model
 
@@ -191,4 +184,4 @@ def dashboard():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False, host="0.0.0.0", port=5000)

@@ -1,8 +1,8 @@
-Flask
-gunicorn
-numpy
-opencv-python-headless
-tensorflow==2.12.0
-gdown
+Flask==2.3.3
+gunicorn==21.2.0
+numpy==1.23.5
+opencv-python-headless==4.8.1.78
+tensorflow-cpu==2.12.0
+gdown==5.1.0
 setuptools
 wheel
